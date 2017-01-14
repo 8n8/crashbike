@@ -113,6 +113,7 @@ data Bike = Bike { w :: Double
                  , maxbiff :: Double
                  , y :: Double
                  , ySum :: Double
+                 , counter :: Int
                  , phiSum :: Double
                  , randGen :: R.StdGen }
 
@@ -127,7 +128,7 @@ instance Dd.Default Bike where
              0 0 0 0 0 0 0 0 0 0   
              0 0 0 0 0 0 0 0 0 0   
              0 0 0 0 0 0 0 0 0 0   
-             0 0 0 0 0 0 0 0 0  
+             0 0 0 0 0 0 0 0 0 0 
              (R.mkStdGen 1)
   
 -- It takes the contents of an ini file (see the Data.Ini
@@ -293,16 +294,16 @@ optimumPID b =
     minfunc pid = maximum (philist b pid)
 
 philist :: Bike -> [Double] -> [Double] 
-philist b pid = take 2000 [abs (phi s) | s <- statelist]
+philist b pid = take 2000 [abs (y s) | s <- statelist]
   where
     statelist = Dl.unfoldr (\a -> Just (a, state a)) withpid 
     state :: Bike -> Bike
     state d = stepper junk 0.03 d
     withpid = pidb pid
     pidb :: [Double] -> Bike
-    pidb [p1,i1,d1] = b { pidphiP = p1
-                        , pidphiI = i1
-                        , pidphiD = d1 }
+    pidb [p1,i1,d1] = b { piddirP = p1
+                        , piddirI = i1
+                        , piddirD = d1 }
     pidb _ = error "Wrong input to pidb in optimumPID."
     junk = Gdv.ViewPort {Gdv.viewPortTranslate = (0,0)
                         ,Gdv.viewPortRotate = 0
@@ -367,6 +368,7 @@ derivatives b =
 stepper :: Gdv.ViewPort -> Float -> Bike -> Bike
 stepper _ t b =  d { phi = sol !! 0
                    , phidot = sol !! 1
+                   , counter = counter b + 1
                    , phiSum = (phiSum b) + phi b
                    , delta = sol !! 2
                    , deltadot = sol !! 3
@@ -378,7 +380,10 @@ stepper _ t b =  d { phi = sol !! 0
                    , ySum = (ySum b) + y b
                    , thetaf = sol !! 7
                    , thetar = sol !! 8
-                   , tphi = fst randTorque
+                   , tphi =
+                     if mod (counter b) 60 == 0
+                     then fst randTorque
+                     else tphi b
                    , tdelta = controller b
                    , randGen = snd randTorque }
   where
@@ -421,7 +426,7 @@ controller b =
 -- picture.
 toPic :: Bike -> Gg.Picture
 toPic b =
-  Gg.translate (-wmod/2) (-1.7*wmod/2) (Gg.pictures
+  Gg.translate (-0.5*wmod) (-1*wmod/2) (Gg.pictures
   [ wheel rrmod 1 yscale thetarfloat
   , Gg.translate wmod 0 (wheel rfmod xscale yscale
                          thetaffloat)
@@ -432,10 +437,11 @@ toPic b =
             , ( wmod - rfmod*1.2*sin lamdfloat
               , yscale*(rfmod + 1.2*rfmod*cos lamdfloat))
             , (wmod, yscale*rfmod) ] 
-  , Gg.line [(0,3*maxdia), (wmod,3*maxdia)]
-  , Gg.line [(wmod/2,3*maxdia), (wmod/2,5*maxdia)]
-  , Gg.translate (ymod+wmod/2) (3*maxdia+xmod) (Gg.circle 3)
-  , Gg.translate (ymod+wmod/2+20*sin psimod) (3*maxdia+xmod+20*cos psimod) (Gg.circle 3)
+  , Gg.line [(-0.8*wmod,3*maxdia), (1.8*wmod,3*maxdia)]
+  -- , Gg.line [(wmod/2,3*maxdia), (wmod/2,5*maxdia)]
+  , Gg.translate (xmod-0.8*wmod) (ymod+maxdia*3) (Gg.circleSolid 3)
+  , Gg.translate (xmod-0.8*wmod+20*cos psimod) (ymod+maxdia*3+20*sin psimod) (Gg.circleSolid 3)
+  -- Line indicating steering angle.
   , Gg.translate (wmod+2*rfmod) 0 (
       Gg.line [(0,0), (maxdia*sin deltamod,
                        maxdia*cos deltamod)])
