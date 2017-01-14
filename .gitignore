@@ -1,1 +1,8 @@
-# Add any directories, files, or patterns you don't want to be tracked by version control
+*
+!src/
+!.gitignore
+!*.hs
+!stack.yaml
+!*.ini
+!crashbike.cabal
+!LICENSE
