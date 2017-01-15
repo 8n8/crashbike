@@ -273,37 +273,46 @@ calculateConstants b =
 -- and passes them to the 'switcher' function.
 main :: IO()
 main = do
-  ini <- Di.readIniFile "/w/git/crashbike/bikedata.ini"
   args <- Se.getArgs
+  ini <- Di.readIniFile (head args)
   switcher args ini
 
 switcher :: [String] -> Either String Di.Ini -> IO()
 switcher args ini  
-  | length args == 0 = rungraphics start
-  | length args == 1, head args == "tune" = print (optimumPID start) 
-  | otherwise = print "Wrong arguments."
+  | length args == 1 = rungraphics start
+  | length args == 3
+  , args !! 1 == "tune" = print (optimumPID start (args !! 2))
+  | otherwise = print "Wrong arguments"
     where start = makeStartState ini
 
-optimumPID :: Bike -> [Double]
-optimumPID b =
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-1 runs [1,1,1] minfunc [0,0,0])
+optimumPID :: Bike -> String -> [Double]
+optimumPID b tunetype = 
+  fst (Ngm.minimize Ngm.NMSimplex2 1E-2 5000 [1,1,1] minfunc [1,1,1])
   where
-    runs :: Int
-    runs = 5000 
     minfunc :: [Double] -> Double
-    minfunc pid = maximum (philist b pid)
+    minfunc pid = maximum (philist b pid tunetype)
 
-philist :: Bike -> [Double] -> [Double] 
-philist b pid = take 2000 [abs (y s) | s <- statelist]
+philist :: Bike -> [Double] -> String -> [Double] 
+philist b pid tunetype
+  | tunetype == "steer" =
+    take 2000 [abs (y s) | s <- statelist]
+  | tunetype == "lean" =
+    take 2000 [abs (phi s) | s <- statelist]
+  | otherwise = error "Invalid arguments." 
   where
     statelist = Dl.unfoldr (\a -> Just (a, state a)) withpid 
     state :: Bike -> Bike
     state d = stepper junk 0.03 d
     withpid = pidb pid
     pidb :: [Double] -> Bike
-    pidb [p1,i1,d1] = b { piddirP = p1
-                        , piddirI = i1
-                        , piddirD = d1 }
+    pidb [p,i,d]
+      | tunetype == "steer" = b { piddirP = p
+                                , piddirI = i
+                                , piddirD = d }
+      | tunetype == "lean" = b { pidphiP = p
+                               , pidphiI = i
+                               , pidphiD = d }
+      | otherwise = error "Wrong arguments"
     pidb _ = error "Wrong input to pidb in optimumPID."
     junk = Gdv.ViewPort {Gdv.viewPortTranslate = (0,0)
                         ,Gdv.viewPortRotate = 0
