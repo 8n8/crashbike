@@ -114,7 +114,7 @@ data Bike = Bike { w :: Double
                  , y :: Double
                  , ySum :: Double
                  , counter :: Int
-                 , phiSum :: Double
+                 , phidotSum :: Double
                  , randGen :: R.StdGen }
 
 -- It sets the initial values for the bike state.  The final
@@ -287,7 +287,7 @@ switcher args ini
 
 optimumPID :: Bike -> String -> [Double]
 optimumPID b tunetype = 
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-5 20000 [2,2,2] minfunc [1,1,1])
+  fst (Ngm.minimize Ngm.NMSimplex2 1E-3 20000 [5,5,5] minfunc [1,1,1])
   where
     minfunc :: [Double] -> Double
     minfunc pid = maximum (philist b pid tunetype)
@@ -295,7 +295,7 @@ optimumPID b tunetype =
 philist :: Bike -> [Double] -> String -> [Double] 
 philist b pid tunetype
   | tunetype == "steer" =
-    take 2000 [abs (y s) | s <- statelist]
+    take 2000 [abs (y s + w s * cos (psi s)) | s <- statelist]
   | tunetype == "lean" =
     take 2000 [abs (phi s) | s <- statelist]
   | otherwise = error "Invalid arguments." 
@@ -375,12 +375,10 @@ derivatives b =
 
 -- It steps the state of the bike on by one time interval.
 stepper :: Gdv.ViewPort -> Float -> Bike -> Bike
-stepper _ t b =  d { phi = if head sol > 0.2
-                           then 10
-                           else head sol
+stepper _ t b =  d { phi = head sol
                    , phidot = sol !! 1
                    , counter = counter b + 1
-                   , phiSum = (phiSum b) + phi b
+                   , phidotSum = (phidotSum b) + phidot b
                    , delta = sol !! 2
                    , deltadot = sol !! 3
                    , psi = sol !! 4
@@ -419,7 +417,7 @@ stepper _ t b =  d { phi = if head sol > 0.2
              , psidot d
              , xdot d
              , ydot d
-             , thetadotr d
+             , thetadotf d
              , thetadotr d ]
     d = derivatives b
 
@@ -428,8 +426,8 @@ stepper _ t b =  d { phi = if head sol > 0.2
 -- and lean angle.
 controller :: Bike -> Double 
 controller b =
-  pidphiP b * phi b + pidphiI b * phiSum b +
-  pidphiD b * phidot b +
+  pidphiP b * phidot b + pidphiI b * phidotSum b +
+  pidphiD b * phidotdot b +
   piddirP b * y b + piddirI b * ySum b +
   piddirD b * ydot b
 
@@ -442,19 +440,18 @@ toPic b =
   , Gg.translate wmod 0 (wheel rfmod xscale yscale
                          thetaffloat)
   , Gg.translate (-2*rrmod) 0 (
-      Gg.line [(0,0), (2*maxdia*sin phisafe,
+      Gg.line [(0,0), (-2*maxdia*sin phisafe,
                        2*maxdia*cos phisafe)])
   , Gg.line [ (0,rrmod*yscale)
             , ( wmod - rfmod*1.2*sin lamdfloat
               , yscale*(rfmod + 1.2*rfmod*cos lamdfloat))
             , (wmod, yscale*rfmod) ] 
   , Gg.line [(-0.8*wmod,3*maxdia), (1.8*wmod,3*maxdia)]
-  -- , Gg.line [(wmod/2,3*maxdia), (wmod/2,5*maxdia)]
   , Gg.translate (xmod-0.8*wmod) (ymod+maxdia*3) (Gg.circleSolid 3)
   , Gg.translate (xmod-0.8*wmod+20*cos psimod) (ymod+maxdia*3+20*sin psimod) (Gg.circleSolid 3)
   -- Line indicating steering angle.
   , Gg.translate (wmod+2*rfmod) 0 (
-      Gg.line [(0,0), (maxdia*sin deltamod,
+      Gg.line [(0,0), (-maxdia*sin deltamod,
                        maxdia*cos deltamod)])
   , Gg.translate (-2.8*rrmod) (-20) (
       Gg.scale textscale textscale (Gg.text "view from behind"))
