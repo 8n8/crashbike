@@ -33,6 +33,7 @@ import qualified Data.Default as Dd
 import qualified Data.Either as De
 import qualified Data.Ini as Di
 import qualified Data.List as Dl
+import qualified Data.List.Extras.Argmax as Dlea
 import qualified Data.Text as Dt
 import qualified GHC.Float as Gf
 import qualified Graphics.Gloss as Gg
@@ -286,9 +287,12 @@ switcher args ini
     where start = makeStartState ini
 
 optimumPID :: Bike -> String -> [Double]
-optimumPID b tunetype = 
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-2 5000 [1,1,1] minfunc [1,1,1])
+optimumPID b tunetype = Dlea.argmin minfunc inputlist 
   where
+    inputlist = [[p,i,d] | p <- plist | i <- ilist | d <- dlist ]
+    plist = [-5,-4.8..30]
+    ilist = [-5,-4.8..10]
+    dlist = [-5,-4.8..5]
     minfunc :: [Double] -> Double
     minfunc pid = maximum (philist b pid tunetype)
 
@@ -447,9 +451,9 @@ toPic b =
               , yscale*(rfmod + 1.2*rfmod*cos lamdfloat))
             , (wmod, yscale*rfmod) ] 
   , Gg.line [(-0.8*wmod,3*maxdia), (1.8*wmod,3*maxdia)]
-  -- , Gg.line [(wmod/2,3*maxdia), (wmod/2,5*maxdia)]
   , Gg.translate (xmod-0.8*wmod) (ymod+maxdia*3) (Gg.circleSolid 3)
-  , Gg.translate (xmod-0.8*wmod+20*cos psimod) (ymod+maxdia*3+20*sin psimod) (Gg.circleSolid 3)
+  , Gg.translate (xmod-0.8*wmod+20*cos psimod)
+    (ymod+maxdia*3+20*sin psimod) (Gg.circleSolid 3)
   -- Line indicating steering angle.
   , Gg.translate (wmod+2*rfmod) 0 (
       Gg.line [(0,0), (maxdia*sin deltamod,
