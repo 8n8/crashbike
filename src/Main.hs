@@ -287,7 +287,7 @@ switcher args ini
 
 optimumPID :: Bike -> String -> [Double]
 optimumPID b tunetype = 
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-2 5000 [1,1,1] minfunc [1,1,1])
+  fst (Ngm.minimize Ngm.NMSimplex2 1E-5 20000 [2,2,2] minfunc [1,1,1])
   where
     minfunc :: [Double] -> Double
     minfunc pid = maximum (philist b pid tunetype)
@@ -375,7 +375,9 @@ derivatives b =
 
 -- It steps the state of the bike on by one time interval.
 stepper :: Gdv.ViewPort -> Float -> Bike -> Bike
-stepper _ t b =  d { phi = sol !! 0
+stepper _ t b =  d { phi = if head sol > 0.2
+                           then 10
+                           else head sol
                    , phidot = sol !! 1
                    , counter = counter b + 1
                    , phiSum = (phiSum b) + phi b
