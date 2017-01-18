@@ -196,11 +196,11 @@ text2double a = read (Dt.unpack a) :: Double
 -- from the bike parameters given in the ini file.
 -- These constants are needed later on for the
 -- equations of motion.  See the main reference
--- Meijaard 07 (full reference at the top of this
--- file) for all the formulas used here.  Matrix
--- elements are referred to as, say m12 for the
--- element in the first row and second column of
--- matrix M.
+-- Meijaard 07 in the README for all the formulas
+-- used here.  Matrix elements are referred to as,
+-- say, m12 for the element in the first row and
+-- second column of matrix M.  Elements beginning
+-- with kt belong to matrix K2.
 calculateConstants :: Bike -> Bike
 calculateConstants b =
   b { m11 = itxx 
@@ -265,9 +265,17 @@ main = do
   ini <- Di.readIniFile (head args)
   switcher args ini
 
+-- It makes decisions about how to obey the command-line
+-- arguments
 switcher :: [String] -> Either String Di.Ini -> IO()
 switcher args ini  
+  -- The first argument is the name of the ini file.  If
+  -- is all there is, then just run the simulation.
   | length args == 1 = rungraphics start
+  -- If there is tuning to be done, then there will be
+  -- three input arguments, first the ini file name, then
+  -- the word "tune", and then either "lean" or "steer" to
+  -- tell it which controller to tune.
   | length args == 3
   , args !! 1 == "tune" = print (optimumPID start (args !! 2))
   | otherwise = print "Wrong arguments"
@@ -419,57 +427,152 @@ controller b =
   piddirP b * y b + piddirI b * ySum b +
   piddirD b * ydot b
 
+-- It makes a round wheel centred on the origin, scales it
+-- so that it looks more realistic when leaning and steering,
+-- and moves it so that the origin is at the bottom of the
+-- wheel.  The inputs are the initial radius of the wheel,
+-- its angle, and the x and y scale factors.
+scaledwheel :: Float -> Float -> Float -> Float -> Gg.Picture 
+scaledwheel r theta xs ys =
+  Gg.translate 0 (r*ys) (Gg.scale xs ys (wheel r theta))
+
+-- It makes a wheel centred on the origin, with two spokes
+-- at right angles to each other.  The inputs are the radius
+-- of the wheel and its angle.
+wheel :: Float -> Float -> Gg.Picture
+wheel r theta = Gg.pictures [ Gg.circle r
+                            , spoke r theta
+                            , spoke r (theta+1.57) ]
+
+-- It makes a wheel spoke centered on the origin.  The inputs
+-- are the length of the spoke and its angle.
+spoke :: Float -> Float -> Gg.Picture
+spoke r theta = Gg.line [ (-r*cos theta,-r*sin theta)
+                        , (r*cos theta, r*sin theta) ]
+  
+-- It makes the indicator for the bike lean angle.  The inputs
+-- are the front wheel radius, the largest of the two wheel
+-- radiuses, and the lean angle.
+leanguide :: Float -> Float -> Float -> Gg.Picture
+leanguide rr' maxr phi' =
+  Gg.translate (-2*rr') 0 (
+  Gg.line [(0,0), (-2*maxr*sin phi',2*maxr*cos phi')])
+
+-- It makes the indicator for the bike steering angle.  The
+-- inputs are: rear wheel radius, back wheel radius, steering
+-- angle, and wheelbase length.
+steerguide :: Float -> Float -> Float -> Float -> Gg.Picture
+steerguide rr' rf' delta' w' =  
+  Gg.translate (w'+2*rf') 0 (
+  Gg.line [(0,0), (-maxr*sin delta', maxr*cos delta')])
+  where maxr = maximum [rr',rf']
+
+-- It makes the bicycle frame.  The inputs are: rear wheel radius,
+-- front wheel radius, length of wheel base, y scaling factor, and
+-- steering axis tilt angle.  The y scaling factor is to make the
+-- bike look more realistic when leaning.
+frame :: Float -> Float -> Float -> Float -> Float -> Gg.Picture
+frame rr' rf' w' ys lamd' = 
+  Gg.line [ (0,rr'*ys)
+            , ( w' - rf'*1.2*sin lamd', ys*(rf' + 1.2*rf'*cos lamd'))
+            , (w', ys*rf') ] 
+
+-- It draws the straight line that marks the intended route.  The
+-- inputs are the largest of the wheel radiuses and the length of
+-- the wheelbase.
+routeline :: Float -> Float -> Gg.Picture
+routeline maxr w' =
+  Gg.line [(-0.8*w',3*maxr), (1.8*w',3*maxr)]
+
+-- It makes the black dot that marks the position of the contact
+-- point between the back wheel and the ground.  The inputs are
+-- the x and y coordinates, the length of the wheelbase, and the
+-- larger of the two wheel radiuses.
+backWheelMarker :: Float -> Float -> Float -> Float -> Gg.Picture
+backWheelMarker x' y' w' maxr = 
+  Gg.translate (x'-0.8*w') (y'+maxr*3) (Gg.circleSolid 3)
+
+-- The inputs are the x and y coordinates of the marker, the larger
+-- of the two wheel radiuses, the length of the wheelbase, and the
+-- angle of the line connecting the wheel contact points with the
+-- x-axis.
+frontWheelMarker :: Float -> Float -> Float -> Float -> Float ->
+                    Gg.Picture
+frontWheelMarker x' y' maxr w' psi' = 
+  Gg.translate xpos ypos (Gg.circleSolid 3)
+  where
+    xpos = x'-0.8*w'+20*cos psi'
+    ypos = y'+maxr*3+20*sin psi'
+
+-- The inputs are the radius of the back wheel and the scaling
+-- factor for the text.
+leanGuideLabel :: Float -> Float -> Gg.Picture
+leanGuideLabel rr' textscale =
+  Gg.translate (-2.8*rr') (-20) (
+    Gg.scale textscale textscale (Gg.text "view from behind"))
+
+sideViewLabel :: Float -> Float -> Gg.Picture
+sideViewLabel w' textscale = 
+  Gg.translate (w'/2) (-20) (
+    Gg.scale textscale textscale (Gg.text "side view"))
+
+steerAngleLabel :: Float -> Float -> Float -> Gg.Picture
+steerAngleLabel w' rf' textscale = 
+  Gg.translate (w'+1.5*rf') (-20) (
+    Gg.scale textscale textscale (Gg.text "steering angle"))
+
+routeLabel :: Float -> Float -> Float -> Gg.Picture
+routeLabel w' maxradius textscale =
+  Gg.translate (0.02*w') (3*maxradius-20) (
+    Gg.scale textscale textscale (Gg.text label))
+  where
+    label = "position on ground of wheel contact points"
+  
+labels :: Float -> Float -> Float -> Float -> Gg.Picture
+labels rr' rf' w' maxr =
+  Gg.pictures
+  [ leanGuideLabel rr' textscale
+  , sideViewLabel w' textscale
+  , steerAngleLabel w' rf' textscale
+  , routeLabel w' maxr textscale ]
+  -- This is the scaling factor for the text that makes it
+  -- about the right size to read easily.
+  where textscale = 0.1
+  
 -- It takes in the state of the bike and makes it into a
 -- picture.
 toPic :: Bike -> Gg.Picture
 toPic b =
+  -- It makes a list of pictures into a single picture and translates
+  -- it so that it looks roughly in the right position on start-up.
   Gg.translate (-0.5*wmod) (-1*wmod/2) (Gg.pictures
-  [ wheel rrmod 1 yscale thetarfloat
-  , Gg.translate wmod 0 (wheel rfmod xscale yscale
-                         thetaffloat)
-  , Gg.translate (-2*rrmod) 0 (
-      Gg.line [(0,0), (-2*maxdia*sin phisafe,
-                       2*maxdia*cos phisafe)])
-  , Gg.line [ (0,rrmod*yscale)
-            , ( wmod - rfmod*1.2*sin lamdfloat
-              , yscale*(rfmod + 1.2*rfmod*cos lamdfloat))
-            , (wmod, yscale*rfmod) ] 
-  , Gg.line [(-0.8*wmod,3*maxdia), (1.8*wmod,3*maxdia)]
-  , Gg.translate (xmod-0.8*wmod) (ymod+maxdia*3) (Gg.circleSolid 3)
-  , Gg.translate (xmod-0.8*wmod+20*cos psimod) (ymod+maxdia*3+20*sin psimod) (Gg.circleSolid 3)
-  -- Line indicating steering angle.
-  , Gg.translate (wmod+2*rfmod) 0 (
-      Gg.line [(0,0), (-maxdia*sin deltamod,
-                       maxdia*cos deltamod)])
-  , Gg.translate (-2.8*rrmod) (-20) (
-      Gg.scale textscale textscale (Gg.text "view from behind"))
-  , Gg.translate (wmod/2) (-20) (
-      Gg.scale textscale textscale (Gg.text "side view"))
-  , Gg.translate (wmod+1.5*rfmod) (-20) (
-      Gg.scale textscale textscale (Gg.text "steering angle"))
-  , Gg.translate (0.02*wmod) (3*maxdia-20) (
-      Gg.scale textscale textscale (Gg.text "position on ground of wheel contact points"))
-  ])
+  [ scaledwheel rrmod thetarfloat 1 yscale 
+  , Gg.translate wmod 0 (scaledwheel rfmod thetaffloat xscale yscale)
+  , frame rrmod rfmod wmod yscale lamdfloat
+  , leanguide rfmod maxradius phisafe
+  , steerguide rrmod rfmod deltamod wmod
+  , routeline maxradius wmod
+  , backWheelMarker xmod ymod wmod maxradius
+  , frontWheelMarker xmod ymod maxradius wmod psimod
+  , labels rrmod rfmod wmod maxradius ] )
   where
-    xscale = (cos (2*phimod))
-    yscale = (cos (2*deltamod))
-    textscale = 0.1
-    maxdia = maximum [rrmod, rfmod]
-    wheel r xs ys thet =
-      Gg.translate 0 (r*ys) (wheelscale r thet xs ys)
-    wheelscale r thet xs ys = Gg.scale xs ys (wheelcent r thet)
-    wheelcent r thet = Gg.pictures
-      [ Gg.circle r
-      , Gg.line [(-r*cos thet,-r*sin thet),
-                 (r*cos thet, r*sin thet)]
-      , Gg.line [(-r*cos (thet+1.57),-r*sin (thet+1.57)),
-                 (r*cos (thet+1.57), r*sin(thet+1.57))]]
-    thetarfloat = d2f (thetar b)
-    thetaffloat = d2f (thetaf b)
+    xscale = cos (2*phimod)
+    yscale = cos (2*deltamod)
+    maxradius = maximum [rrmod, rfmod]
+    -- This is the lean angle.  Since the equations of motion are
+    -- linearized they are not valid for large lean angles, so this
+    -- stops the program and prints an error if the bike leans more
+    -- than 0.26 rad ~= 20 degrees.
     phisafe = if abs (phi b) < 0.26
               then d2f (2*phi b)
               else error "The bike has crashed."
+    -- This is a scaling factor for lengths.  It is not magic,
+    -- it just is about right for fitting the graphics on my
+    -- laptop screen.
     f = 250
+    d2f a = Gf.double2Float a
+    thetarfloat = d2f (thetar b)
+    thetaffloat = d2f (thetaf b)
     xmod = d2f (x b)
     ymod = d2f (y b)
     phimod = d2f (phi b)
@@ -479,4 +582,3 @@ toPic b =
     wmod = f * d2f (w b)
     lamdfloat = d2f (lamd b)
     psimod = d2f (psi b)
-    d2f a = Gf.double2Float a
