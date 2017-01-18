@@ -3,9 +3,9 @@ version:             0.1.0.0
 synopsis:            Simple project template from stack
 description:         Please see README.md
 homepage:            https://github.com/githubuser/crashbike#readme
-license:             BSD3
+license:             GPLv3
 license-file:        LICENSE
-author:              Author name here
+author:              True Ghiassi
 maintainer:          example@example.com
 copyright:           2017 Author name here
 category:            Web

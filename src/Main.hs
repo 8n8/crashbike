@@ -1,33 +1,22 @@
--- A Haskell program to simulate the motion of a
--- bicycle and display the results.  It uses
--- a bicycle model and linearized equations of
--- motion taken from Meijaard 07. 
+-- Copyright 2017 True Ghiassi true@ghiassitrio.co.uk
 
--- The bicycle travels at a constant velocity.  It is
--- excited by random disturbances, which are sideways
--- forces.
+-- This file is part of Crashbike.
 
--- The bicycle is controlled by two PID controllers,
--- one to keep it upright and the other to keep it
--- travelling in a straight line.  The program takes
--- 6 arguments: the first three are the PID
--- parameters for the controller that keeps it
--- upright, and the last three are the PID
--- parameters to keep it on route.  The
--- controllers work by adjusting the torque applied
--- to the steering.
+-- Crashbike is free software: you can redistribute it
+-- and/or modify it under the terms of the GNU General
+-- Public License as published by the Free Software
+-- Foundation, either version 3 of the License, or (at
+-- your option) any later version.
 
--- REFERENCES 
--- ==========
+-- Crashbike is distributed in the hope that it will be
+-- useful, but WITHOUT ANY WARRANTY; without even the
+-- implied warranty of MERCHANTABILITY or FITNESS FOR
+-- A PARTICULAR PURPOSE.  See the GNU General Public
+-- License for more details.
 
--- J.P. Meijaard et al. "Linearized dynamics equations
--- for the balance and steer of a bicycle: a benchmark
--- and review". In: Proceedings of the Royal Society of
--- London A: Mathematical, Physical and Engineering
--- Sciences 463.2084 (2007), pp. 1955-1982. ISSN:
--- 1362-5021. DOI: 10.1098/rspa . 2007 . 1857. eprint:
--- http://rspa.royalsocietypublishing.org/content/463/
--- 2084/1955.full.pdf. 
+-- You should have received a copy of the GNU General
+-- Public License along with Crashbike.  If not, see
+-- <http://www.gnu.org/licenses/>.
 
 import qualified Data.Default as Dd
 import qualified Data.Either as De
@@ -183,7 +172,6 @@ ini2bike ini b = b { w = gv "bike" "wheelbase"
                    , piddirP = gv "route controller" "p"
                    , piddirI = gv "route controller" "i"
                    , piddirD = gv "route controller" "d" }
-
   where gv header key = getinival ini header key
   
 -- It takes in an ini file (see the Data.Ini module)
