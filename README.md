@@ -6,7 +6,13 @@ The bicycle travels at a constant velocity over a perfectly smooth flat surface.
 
 The bicycle is controlled by two PID controllers, one to keep it upright and the other to keep it travelling along the desired route.  The controllers work by adjusting the torque applied to the steering.
 
-The arguments are:
+# Installation
+
+I have only tested the installation with Arch Linux.  Install the Haskell Stack Toolbox from the official repositories.  Also install blas and lapack for linear algebra, if necessary (they were already installed on my machine).  Clone this git repository and then run 'stack build' (without the quotes) in it.  The first build will take a while, because stack will have to download the compiler and all the libraries.
+
+# Usage
+
+Run the program with 'stack exec crashbike <arguments>'. The arguments are:
 
 1. the path of the file containing the parameters
 2. (optional) the word "tune" 
