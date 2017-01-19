@@ -1,5 +1,6 @@
 *
 !src/
+!README.md
 !.gitignore
 !*.hs
 !stack.yaml
