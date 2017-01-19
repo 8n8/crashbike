@@ -18,4 +18,4 @@ executable crashbike
   main-is:             Main.hs
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5, gloss, ini, text, data-default, hmatrix, random, hmatrix-gsl
-  other-modules:       BikeState, State2Picture
+  other-modules:       BikeState, State2Picture, Stepper, MakeStartState
