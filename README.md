@@ -14,9 +14,9 @@ I have only tested the installation with Arch Linux.  Install the Haskell Stack 
 
 Run the program with 'stack exec crashbike <arguments>'. The arguments are:
 
-1. the path of the file containing the parameters
+1. the path of the file containing the parameters, such as the 'standardbike.ini' file provided here
 2. (optional) the word "tune" 
-3. (necessary if 2 is there) either "steer" or "lean" to find the most stable PID parameters
+3. (necessary if 2 is there) either "steer" or "lean" to find the most stable PID parameters for either the steering controller or the lean controller
 
 # References
 
