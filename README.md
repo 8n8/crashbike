@@ -6,7 +6,8 @@ The bicycle travels at a constant velocity over a perfectly smooth flat surface.
 
 The bicycle is controlled by two PID controllers, one to keep it upright and the other to keep it travelling along the desired route.  The controllers work by adjusting the torque applied to the steering.
 
-The arguments are
+The arguments are:
+
 1. the path of the file containing the parameters
 2. (optional) the word "tune" 
 3. (necessary if 2 is there) either "steer" or "lean" to find the most stable PID parameters
