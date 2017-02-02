@@ -18,6 +18,12 @@
 -- Public License along with Crashbike.  If not, see
 -- <http://www.gnu.org/licenses/>.
 
+-- DESCRIPTION
+
+-- Read the README.
+
+module Main where
+
 import qualified Data.Ini as Di
 import qualified Data.List as Dl
 import qualified Graphics.Gloss as Gg

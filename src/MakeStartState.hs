@@ -21,7 +21,7 @@
 -- DESCRIPTION
 
 -- This module makes the initial state of the bike.  It
--- takes the contents of the ini file, and calculates
+-- takes the contents of the ini file and calculates
 -- the intermediate constants needed for the equations
 -- of motion.
 
