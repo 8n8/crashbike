@@ -55,7 +55,7 @@ switcher args ini
   -- the word "tune", and then either "lean" or "steer" to
   -- tell it which controller to tune.
   | length args == 3
-  , args !! 1 == "tune" = print (Op.optimumPID start (args !! 2))
+  , args !! 1 == "tune" = print (Op.optimumPID start)
   | otherwise = print "Wrong arguments"
     where start = MSS.makeStartState ini
   

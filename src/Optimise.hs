@@ -32,18 +32,8 @@ import qualified Graphics.Gloss.Data.ViewPort as Gdv
 import qualified Numeric.GSL.Minimization as Ngm
 import qualified Stepper as St
 
--- It is supposed to find the optimum PID parameters for one
--- of the tuners, depending on the command line arguments.
--- It is actually a pretty rubbish optimiser.  I think that
--- the 'minfunc' output must be quite erratic, so possibly
--- it misses minimums.  Whatever the reason, it works very
--- badly.  One possibility is to replace it with some frequency-
--- doman analysis, using Bode plots.  This could use the
--- Laplace transforms of the equations of motion and try
--- to find PID parameters that produce a low gain for a
--- reasonable range of, say, 30 different frequencies.
-optimumPID :: Bike -> String -> [Double]
-optimumPID b tunetype = 
+optimumPID :: Bike -> [Double]
+optimumPID b = 
   -- The arguments to 'minimize' are
   -- 1) the algorithm to use
   -- 2) the required accuracy
@@ -53,12 +43,39 @@ optimumPID b tunetype =
   --    initially.
   -- 5) the function to minimize
   -- 6) the initial guess
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-3 20000 [5,5,5] minfunc [1,1,1])
+  
+  fst (Ngm.minimize Ngm.NMSimplex2 1E-2 1000000 [10,10,10] minfunc [1,1,1])
   where
     -- It gives the largest error of the simulation run
     -- corresponding to the PID values.
     minfunc :: [Double] -> Double
-    minfunc pid = maximum (errlist b pid tunetype)
+    minfunc pid = leastSquaredError b pid
+
+-- It works out the least-squared difference between a gain
+-- magnitude of 1 for a range of frequencies and the actual
+-- gain for the given PID parameters.
+leastSquaredError :: Bike -> [Double] -> Double
+leastSquaredError b pid = sum [(1-g)**2 | g <- gains]
+  where
+    gains = [Dc.magnitude i | i <- freqResponses]
+    freqResponses = [frequencyResponse omega pid b | omega <- omegas]
+    omegas = [1..30]
+    
+frequencyResponse :: Double -> [Double] -> Bike -> Dc.Complex Double
+frequencyResponse omega pid b =
+  (d*w2 - j*p*z omega - i) /
+  ((z (m21 b) + d)*w2 +
+   (-j* z (c21 b) - j*p)* z omega - k21 - i)
+  where
+    w2 = omega**2 Dc.:+ 0
+    j = 0 Dc.:+ 1
+    p = z (head pid)
+    i = z (pid !! 1) 
+    d = z (pid !! 2) 
+    v2 = z (v b**2)
+    k21 = z 9.81 * z (ko21 b) + v2 * z (kt21 b)
+    z :: Double -> Dc.Complex Double
+    z a = a Dc.:+ 0
 
 -- It runs a single simulation of 2000 steps of 0.03 seconds each
 -- and generates a list of values of y or phi corresponding to it.
@@ -103,13 +120,3 @@ errlist b pid tunetype
                         ,Gdv.viewPortRotate = 0
                         ,Gdv.viewPortScale = 0 }
 
-frequencyResponse :: Float -> Bike -> Dc.Complex
-frequencyResponse omega b =
-  (d*w2 - j*p*omega - i) /
-  ((m21 b + d)*w2+(-j*c21 b - j*p)*omega - k21 b - i)
-  where
-    w2 = omega**2
-    j = 0 Dc.:+ 1
-    p = pidphiP b
-    i = pidphiI b
-    d = pidphiD b
