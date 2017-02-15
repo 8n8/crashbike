@@ -26,14 +26,16 @@
 module Optimise ( optimumPID ) where
 
 import BikeState
+import qualified Control.Monad as Cm
 import qualified Data.Complex as Dc
 import qualified Data.List as Dl
+import qualified Data.List.Extras.Argmax as Min
 import qualified Graphics.Gloss.Data.ViewPort as Gdv
 import qualified Numeric.GSL.Minimization as Ngm
 import qualified Stepper as St
 
 optimumPID :: Bike -> [Double]
-optimumPID b = 
+optimumPID b = Min.argmin minfunc perms
   -- The arguments to 'minimize' are
   -- 1) the algorithm to use
   -- 2) the required accuracy
@@ -44,11 +46,13 @@ optimumPID b =
   -- 5) the function to minimize
   -- 6) the initial guess
   
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-2 1000000 [10,10,10] minfunc [1,1,1])
-  where
+  -- fst (Ngm.minimize Ngm.NMSimplex2 1E-2 1000000 [10,10,10] minfunc [1,1,1])
+  -- where
     -- It gives the largest error of the simulation run
     -- corresponding to the PID values.
-    minfunc :: [Double] -> Double
+  where
+    perms :: [[Double]] 
+    perms = Cm.replicateM 3 [-20,-19..20]
     minfunc pid = leastSquaredError b pid
 
 -- It works out the least-squared difference between a gain
@@ -59,7 +63,7 @@ leastSquaredError b pid = sum [(1-g)**2 | g <- gains]
   where
     gains = [Dc.magnitude i | i <- freqResponses]
     freqResponses = [frequencyResponse omega pid b | omega <- omegas]
-    omegas = [1..30]
+    omegas = [1,1.2..6]
     
 frequencyResponse :: Double -> [Double] -> Bike -> Dc.Complex Double
 frequencyResponse omega pid b =
