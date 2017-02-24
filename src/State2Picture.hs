@@ -25,9 +25,9 @@
 
 module State2Picture ( toPic ) where
 
-import qualified Graphics.Gloss as Gg
-import qualified GHC.Float as Gf
 import BikeState
+import qualified GHC.Float as Gf
+import qualified Graphics.Gloss as Gg
 
 -- It makes a round wheel centred on the origin, scales it
 -- so that it looks more realistic when leaning and steering,

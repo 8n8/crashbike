@@ -26,9 +26,11 @@
 
 module BikeState where
 
-import qualified System.Random as R
+
 import qualified Data.Default as Dd
+import qualified System.Random as R
   
+
 -- It sets the initial values for the bike state.  The final
 -- value is the random generator used to make the random
 -- disturbances.  See the Random module on the Hackage
@@ -43,8 +45,7 @@ instance Dd.Default Bike where
              0 0 0 0 0 0 0 0 0 0 
              (R.mkStdGen 1)
 
--- It contains all the information needed for the bike
--- state.   
+
 data Bike = Bike { w :: Double
                  , c :: Double 
                  , lamd :: Double

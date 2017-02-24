@@ -21,95 +21,45 @@
 -- DESCRIPTION
 
 -- This module provides a function to choose the best
--- PID parameters.
+-- PID parameters for the lean controller.
 
-module Optimise ( optimumPID ) where
+module Optimise ( optimumPID, errlist ) where
 
 import BikeState
-import qualified Data.Complex as Dc
 import qualified Data.List as Dl
 import qualified Graphics.Gloss.Data.ViewPort as Gdv
 import qualified Numeric.GSL.Minimization as Ngm
 import qualified Stepper as St
 
+-- It tries to find the best PID values for the lean controller.
+-- It runs the simulation many times and tries to minimise the
+-- sum of the squared distance from the vertical.
 optimumPID :: Bike -> [Double]
 optimumPID b = 
-  -- The arguments to 'minimize' are
-  -- 1) the algorithm to use
-  -- 2) the required accuracy
-  -- 3) the maximum number of runs
-  -- 4) the initial search box.  I assume that this is the
-  --    difference from the initial guess to search within
-  --    initially.
-  -- 5) the function to minimize
-  -- 6) the initial guess
-  
-  fst (Ngm.minimize Ngm.NMSimplex2 1E-2 1000000 [10,10,10] minfunc [1,1,1])
+  fst (Ngm.minimize Ngm.NMSimplex2 1E-4 1000 [1,1,1] minfunc [0,0,0])
   where
-    -- It gives the largest error of the simulation run
-    -- corresponding to the PID values.
     minfunc :: [Double] -> Double
-    minfunc pid = leastSquaredError b pid
+    minfunc pid = sum [i*i | i <- (errlist b pid)]
 
--- It works out the least-squared difference between a gain
--- magnitude of 1 for a range of frequencies and the actual
--- gain for the given PID parameters.
-leastSquaredError :: Bike -> [Double] -> Double
-leastSquaredError b pid = sum [(1-g)**2 | g <- gains]
-  where
-    gains = [Dc.magnitude i | i <- freqResponses]
-    freqResponses = [frequencyResponse omega pid b | omega <- omegas]
-    omegas = [1..30]
-    
-frequencyResponse :: Double -> [Double] -> Bike -> Dc.Complex Double
-frequencyResponse omega pid b =
-  (d*w2 - j*p*z omega - i) /
-  ((z (m21 b) + d)*w2 +
-   (-j* z (c21 b) - j*p)* z omega - k21 - i)
-  where
-    w2 = omega**2 Dc.:+ 0
-    j = 0 Dc.:+ 1
-    p = z (head pid)
-    i = z (pid !! 1) 
-    d = z (pid !! 2) 
-    v2 = z (v b**2)
-    k21 = z 9.81 * z (ko21 b) + v2 * z (kt21 b)
-    z :: Double -> Dc.Complex Double
-    z a = a Dc.:+ 0
-
--- It runs a single simulation of 2000 steps of 0.03 seconds each
--- and generates a list of values of y or phi corresponding to it.
--- The choice of phi or y depends on the command-line arguments.
-errlist :: Bike -> [Double] -> String -> [Double] 
-errlist b pid tunetype
-  -- It calculates the list of y-values of the contact point
-  -- of the back wheel with the ground corresponding to all
-  -- the states of one simulation.
-  | tunetype == "steer" =
-    take 2000 [abs (y s + w s * cos (psi s)) | s <- statelist]
-  -- It calculates a list of bike lean values.
-  | tunetype == "lean" =
-    take 2000 [abs (phi s) | s <- statelist]
-  | otherwise = error "Invalid arguments." 
+-- It runs a single simulation of 2000 steps of the simulator
+-- and generates a list of values of the lean angle corresponding 
+-- to it.
+errlist :: Bike -> [Double] -> [Double] 
+errlist b pid = take 2000 [phi s | s <- statelist]
   where
     -- It constructs an infinite list of bike states, each
     -- constructred from the previous one using the 'stepper'
-    -- function.
+    -- function from the Stepper module.
     statelist = Dl.unfoldr (\a -> Just (a, state a)) withpid 
     state :: Bike -> Bike
-    state d = St.stepper junk 0.03 d
+    state d = St.stepper junk (1/30) d
     withpid = pidb pid
     -- It updates the bike state with the new pid values.
     pidb :: [Double] -> Bike
-    pidb [p,i,d]
-      | tunetype == "steer" = b { piddirP = p
-                                , piddirI = i
-                                , piddirD = d }
-      | tunetype == "lean" = b { pidphiP = p
-                               , pidphiI = i
-                               , pidphiD = d }
-      | otherwise = error "Wrong arguments"
-    pidb _ = error "Wrong input to pidb in optimumPID."
+    pidb [p,i,d] = b { pidphiP = p
+                     , pidphiI = i
+                     , pidphiD = d }
+    pidb _ = error "The input to pidb function was wrong."
     -- The first element of the stepper function passed to
     -- the simulate has to be of type Gdv.ViewPort.  This
     -- contains information about the user input to the graphics
@@ -119,4 +69,3 @@ errlist b pid tunetype
     junk = Gdv.ViewPort {Gdv.viewPortTranslate = (0,0)
                         ,Gdv.viewPortRotate = 0
                         ,Gdv.viewPortScale = 0 }
-

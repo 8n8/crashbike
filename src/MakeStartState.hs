@@ -27,6 +27,7 @@
 
 module MakeStartState ( makeStartState ) where
 
+
 import BikeState
 import qualified Data.Default as Dd
 import qualified Data.Either as De
@@ -34,10 +35,12 @@ import qualified Data.Ini as Di
 import qualified Data.Text as Dt
 import qualified System.Random as R
 
+
 makeStartState :: Either String Di.Ini -> Bike
 makeStartState ini = calculateConstants basic
   where basic = ini2bike (
           De.either (\a -> error a) id ini) Dd.def
+
 
 -- It takes the contents of an ini file (see the Data.Ini
 -- module on the Hackage website) and the state of the
@@ -93,6 +96,7 @@ ini2bike ini b = b { w = gv "bike" "wheelbase"
                    , piddirD = gv "route controller" "d" }
   where gv header key = getinival ini header key
 
+
 -- It takes in an ini file (see the Data.Ini module)
 -- and a header and a key and looks up the value.
 -- The reason the output is set to 'Double' is that
@@ -105,11 +109,13 @@ getinival ini header key =
     h = Dt.pack header
     k = Dt.pack key
 
+
 -- It converts text containing numeric characters
 -- into a Double.  The text type is a sort of
 -- compressed string.
 text2double :: Dt.Text -> Double
 text2double a = read (Dt.unpack a) :: Double
+
 
 -- It updates the bike state with constants derived
 -- from the bike parameters given in the ini file.
