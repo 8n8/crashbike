@@ -48,7 +48,7 @@ main = do
 switcher :: [String] -> Bike -> IO()
 switcher [_] start = rungraphics start
 switcher [_,"tune"] start = print (Op.optimumPID start)
-switcher _ _ = print "Something was wrong with the\
+switcher _ _ = putStrLn "Something was wrong with the\
   \ arguments.  The first argument should be the path\
   \ to the ini file containing the bike parameters.  This\
   \ is compulsory.  You can add a second argument, the word\
