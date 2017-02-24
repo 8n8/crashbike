@@ -25,4 +25,4 @@ and review". In: Proceedings of the Royal Society of
 London A: Mathematical, Physical and Engineering
 Sciences 463.2084 (2007), pp. 1955-1982. ISSN:
 1362-5021. DOI: 10.1098/rspa . 2007 . 1857. eprint:
-http://rspa.royalsocietypublishing.org/content/463/ 2084/1955.full.pdf. 
+[http://rspa.royalsocietypublishing.org/content/463/ 2084/1955.full.pdf].
