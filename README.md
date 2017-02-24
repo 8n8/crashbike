@@ -1,6 +1,6 @@
 # Description
 
-Crashbike is a Haskell program to simulate the motion of a bicycle and display the results.  It uses a bicycle model and linearized equations of motion taken from Meijaard 07. 
+Crashbike is a Haskell program to simulate the motion of a bicycle and display the results.  It uses a bicycle model and linearized equations of motion taken from (Meijaard 07). 
 
 The bicycle travels at a constant velocity over a perfectly smooth flat surface.  It is excited by random sideways forces.
 
@@ -12,11 +12,10 @@ I have only tested the installation with Arch Linux.  Install the Haskell Stack 
 
 # Usage
 
-Run the program with 'stack exec crashbike <arguments>'. The arguments are:
+Run the program with 'stack exec crashbike <arguments>'.  The arguments are:
 
 1. the path of the file containing the parameters, such as the 'standardbike.ini' file provided here
-2. (optional) the word "tune" 
-3. (necessary if 2 is there) either "steer" or "lean" to find the most stable PID parameters for either the steering controller or the lean controller
+2. (optional) the word "tune".  This will attempt to find the optimimum PID parameters for the controller that keeps the bike upright.
 
 # References
 

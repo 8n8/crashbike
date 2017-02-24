@@ -41,23 +41,19 @@ main = do
   -- It reads the ini file, which contains the parameters
   -- of the bike.
   ini <- Di.readIniFile (head args)
-  switcher args ini
+  switcher args (MSS.makeStartState ini)
 
 -- It makes decisions about how to obey the command-line
 -- arguments
-switcher :: [String] -> Either String Di.Ini -> IO()
-switcher args ini  
-  -- The first argument is the name of the ini file.  If
-  -- is all there is, then just run the simulation.
-  | length args == 1 = rungraphics start
-  -- If there is tuning to be done, then there will be
-  -- three input arguments, first the ini file name, then
-  -- the word "tune", and then either "lean" or "steer" to
-  -- tell it which controller to tune.
-  | length args == 3
-  , args !! 1 == "tune" = print (Op.optimumPID start)
-  | otherwise = print "Wrong arguments"
-    where start = MSS.makeStartState ini
+switcher :: [String] -> Bike -> IO()
+switcher [_] start = rungraphics start
+switcher [_,"tune"] start = print (Op.optimumPID start)
+switcher _ _ = print "Something was wrong with the\
+  \ arguments.  The first argument should be the path\
+  \ to the ini file containing the bike parameters.  This\
+  \ is compulsory.  You can add a second argument, the word\
+  \ 'tune', if you want to try to find the optimum PID\
+  \ parameters instead."
   
 rungraphics :: Bike -> IO()
 rungraphics startstate = 
