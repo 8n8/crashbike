@@ -23,14 +23,11 @@
 -- This module converts the state of the bicycle into
 -- a picture.  The picture type is part of Graphics.Gloss.
 
-
 module State2Picture ( toPic ) where
-
 
 import BikeState
 import qualified GHC.Float as Gf
 import qualified Graphics.Gloss as Gg
-
 
 -- It makes a round wheel centred on the origin, scales it
 -- so that it looks more realistic when leaning and steering,
@@ -41,7 +38,6 @@ scaledwheel :: Float -> Float -> Float -> Float -> Gg.Picture
 scaledwheel r theta xs ys =
   Gg.translate 0 (r*ys) (Gg.scale xs ys (wheel r theta))
 
-
 -- It makes a wheel centred on the origin, with two spokes
 -- at right angles to each other.  The inputs are the radius
 -- of the wheel and its angle.
@@ -50,14 +46,12 @@ wheel r theta = Gg.pictures [ Gg.circle r
                             , spoke r theta
                             , spoke r (theta+1.57) ]
 
-
 -- It makes a wheel spoke centered on the origin.  The inputs
 -- are the length of the spoke and its angle.
 spoke :: Float -> Float -> Gg.Picture
 spoke r theta = Gg.line [ (-r*cos theta,-r*sin theta)
                         , (r*cos theta, r*sin theta) ]
   
-
 -- It makes the indicator for the bike lean angle.  The inputs
 -- are the front wheel radius, the largest of the two wheel
 -- radiuses, and the lean angle.
@@ -65,7 +59,6 @@ leanguide :: Float -> Float -> Float -> Gg.Picture
 leanguide rr' maxr phi' =
   Gg.translate (-2*rr') 0 (
   Gg.line [(0,0), (-2*maxr*sin phi',2*maxr*cos phi')])
-
 
 -- It makes the indicator for the bike steering angle.  The
 -- inputs are: rear wheel radius, back wheel radius, steering
@@ -75,7 +68,6 @@ steerguide rr' rf' delta' w' =
   Gg.translate (w'+2*rf') 0 (
   Gg.line [(0,0), (-maxr*sin delta', maxr*cos delta')])
   where maxr = maximum [rr',rf']
-
 
 -- It makes the bicycle frame.  The inputs are: rear wheel radius,
 -- front wheel radius, length of wheel base, y scaling factor, and
@@ -87,14 +79,12 @@ frame rr' rf' w' ys lamd' =
             , ( w' - rf'*1.2*sin lamd', ys*(rf' + 1.2*rf'*cos lamd'))
             , (w', ys*rf') ] 
 
-
 -- It draws the straight line that marks the intended route.  The
 -- inputs are the largest of the wheel radiuses and the length of
 -- the wheelbase.
 routeline :: Float -> Float -> Gg.Picture
 routeline maxr w' =
   Gg.line [(-0.8*w',3*maxr), (1.8*w',3*maxr)]
-
 
 -- It makes the black dot that marks the position of the contact
 -- point between the back wheel and the ground.  The inputs are
@@ -103,7 +93,6 @@ routeline maxr w' =
 backWheelMarker :: Float -> Float -> Float -> Float -> Gg.Picture
 backWheelMarker x' y' w' maxr = 
   Gg.translate (x'-0.8*w') (y'+maxr*3) (Gg.circleSolid 3)
-
 
 -- The inputs are the x and y coordinates of the marker, the larger
 -- of the two wheel radiuses, the length of the wheelbase, and the
@@ -117,7 +106,6 @@ frontWheelMarker x' y' maxr w' psi' =
     xpos = x'-0.8*w'+20*cos psi'
     ypos = y'+maxr*3+20*sin psi'
 
-
 -- The inputs are the radius of the back wheel and the scaling
 -- factor for the text.
 leanGuideLabel :: Float -> Float -> Gg.Picture
@@ -125,18 +113,15 @@ leanGuideLabel rr' textscale =
   Gg.translate (-2.8*rr') (-20) (
     Gg.scale textscale textscale (Gg.text "view from behind"))
 
-
 sideViewLabel :: Float -> Float -> Gg.Picture
 sideViewLabel w' textscale = 
   Gg.translate (w'/2) (-20) (
     Gg.scale textscale textscale (Gg.text "side view"))
 
-
 steerAngleLabel :: Float -> Float -> Float -> Gg.Picture
 steerAngleLabel w' rf' textscale = 
   Gg.translate (w'+1.5*rf') (-20) (
     Gg.scale textscale textscale (Gg.text "steering angle"))
-
 
 routeLabel :: Float -> Float -> Float -> Gg.Picture
 routeLabel w' maxradius textscale =
@@ -145,7 +130,6 @@ routeLabel w' maxradius textscale =
   where
     label = "position on ground of wheel contact points"
   
-
 labels :: Float -> Float -> Float -> Float -> Gg.Picture
 labels rr' rf' w' maxr =
   Gg.pictures
@@ -157,7 +141,6 @@ labels rr' rf' w' maxr =
   -- about the right size to read easily.
   where textscale = 0.1
   
-
 -- It takes in the state of the bike and makes it into a
 -- picture.
 toPic :: Bike -> Gg.Picture

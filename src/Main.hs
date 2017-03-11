@@ -22,9 +22,7 @@
 
 -- Read the README.
 
-
 module Main where
-
 
 import BikeState
 import qualified Data.Ini as Di
@@ -34,7 +32,6 @@ import qualified Optimise as Op
 import qualified System.Environment as Se
 import qualified State2Picture as S2P
 import qualified Stepper as St
-
   
 -- It reads the ini file and the command line arguments
 -- and passes them to the 'switcher' function.
@@ -45,7 +42,6 @@ main = do
   -- of the bike.
   ini <- Di.readIniFile (head args)
   switcher args (MSS.makeStartState ini)
-
 
 -- It makes decisions about how to obey the command-line
 -- arguments
@@ -59,11 +55,9 @@ switcher _ _ = putStrLn "Something was wrong with the\
   \ 'tune', if you want to try to find the optimum PID\
   \ parameters instead."
   
-
 rungraphics :: Bike -> IO()
 rungraphics startstate = 
   Gg.simulate window Gg.green 30 startstate S2P.toPic St.stepper 
-
 
 -- It sets the parameters for the graphics window.
 window :: Gg.Display

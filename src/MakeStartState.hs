@@ -25,7 +25,6 @@
 -- the intermediate constants needed for the equations
 -- of motion.
 
-
 module MakeStartState ( makeStartState ) where
 
 
