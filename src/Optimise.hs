@@ -23,13 +23,16 @@
 -- This module provides a function to choose the best
 -- PID parameters for the lean controller.
 
-module Optimise ( optimumPID, errlist ) where
+
+module Optimise ( optimumPID ) where
+
 
 import BikeState
 import qualified Data.List as Dl
 import qualified Graphics.Gloss.Data.ViewPort as Gdv
 import qualified Numeric.GSL.Minimization as Ngm
 import qualified Stepper as St
+
 
 -- It tries to find the best PID values for the lean controller.
 -- It runs the simulation many times and tries to minimise the
@@ -40,6 +43,7 @@ optimumPID b =
   where
     minfunc :: [Double] -> Double
     minfunc pid = sum [i*i | i <- (errlist b pid)]
+
 
 -- It runs a single simulation of 2000 steps of the simulator
 -- and generates a list of values of the lean angle corresponding 

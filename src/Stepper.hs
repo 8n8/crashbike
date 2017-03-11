@@ -25,7 +25,9 @@
 -- function takes the bike state and a small period
 -- of time and finds the next state.
 
+
 module Stepper ( stepper ) where
+
 
 import BikeState
 import qualified Numeric.GSL.ODE as Ode
@@ -34,9 +36,10 @@ import qualified System.Random as R
 import qualified GHC.Float as Gf
 import qualified Graphics.Gloss.Data.ViewPort as Gdv
 
+
 -- It calculates the derivatives used in the numerical
--- integration.  See the main reference defined at the
--- top for the equations.
+-- integration.  See the reference Meijaard 07 in the
+-- README for the theory.
 derivatives :: Bike -> Bike
 derivatives b = 
   b { phidot = p2
@@ -75,6 +78,7 @@ derivatives b =
     k12 = g*ko12 b + v2*kt12 b
     k21 = g*ko21 b + v2*kt21 b
     k22 = g*ko22 b + v2*kt22 b
+
 
 -- It steps the state of the bike on by one time interval.
 stepper :: Gdv.ViewPort -> Float -> Bike -> Bike
@@ -123,6 +127,7 @@ stepper _ t b =  d { phi = head sol
              , thetadotf d
              , thetadotr d ]
     d = derivatives b
+
 
 -- It calculates the torque to apply to the steering
 -- from the PID parameters and the errors in position
