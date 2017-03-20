@@ -57,7 +57,8 @@ switcher _ _ = putStrLn "Something was wrong with the\
   
 rungraphics :: Bike -> IO()
 rungraphics startstate = 
-  Gg.simulate window Gg.green 30 startstate S2P.toPic St.stepper 
+  Gg.simulate window Gg.green 30 startstate S2P.toPic 
+    St.stepper 
 
 -- It sets the parameters for the graphics window.
 window :: Gg.Display

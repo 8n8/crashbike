@@ -27,7 +27,6 @@
 
 module MakeStartState ( makeStartState ) where
 
-
 import BikeState
 import qualified Data.Default as Dd
 import qualified Data.Either as De
